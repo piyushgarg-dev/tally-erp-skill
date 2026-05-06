@@ -2,13 +2,12 @@
   <HEADER>
     <VERSION>1</VERSION>
     <TALLYREQUEST>Export</TALLYREQUEST>
-    <TYPE>Data</TYPE>
-    <ID>List of Accounts</ID>
+    <TYPE>Collection</TYPE>
+    <ID>List of Companies</ID>
   </HEADER>
   <BODY>
     <DESC>
       <STATICVARIABLES>
-        <SVCURRENTCOMPANY>{{COMPANY}}</SVCURRENTCOMPANY>
         <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
       </STATICVARIABLES>
     </DESC>

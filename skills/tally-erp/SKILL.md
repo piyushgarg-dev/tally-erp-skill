@@ -52,7 +52,7 @@ TallyPrime itself only runs on Windows, but the CLI can run from any OS as long 
 All subcommands accept these **global flags**: `--scheme` (default `http`; set `https` for TLS), `--host` (default `localhost`), `--port` (default `9000`), `--company`, `--timeout` (default `30s`), `--pretty`.
 
 ### `tally ping`
-Confirm Tally is reachable and responding.
+Confirm Tally is reachable and responding. Does **not** require `--company` — pings the gateway with a `List of Companies` request, so it works even when no company is loaded.
 
 ```bash
 tally ping
@@ -106,7 +106,15 @@ tally collection --company "ABC" --id "List of Stock Items" \
     --filter "$ClosingBalance > 0" --fields Name,Parent,ClosingBalance
 ```
 
-Common collection IDs: `List of Companies`, `List of Groups`, `List of Ledgers`, `List of Cost Categories`, `List of Cost Centres`, `List of Stock Groups`, `List of Stock Categories`, `List of Stock Items`, `List of Godowns`, `List of Units`, `List of Voucher Types`, `List of Currencies`, `List of Budgets`.
+Common collection IDs: `List of Companies`, `List of Groups`, `List of Ledgers`, `List of Cost Categories`, `List of Cost Centres`, `List of Stock Groups`, `List of Stock Categories`, `List of Stock Items`, `List of Godowns`, `List of Voucher Types`, `List of Budgets`.
+
+> ⚠️ **Avoid the built-in `List of Currencies`, `List of Units`, and `List of Vouchers` collection IDs** — they crash TallyPrime when exported as XML. Use the bundled templates instead, which substitute custom TDL collections (`TYPE=Currency`, `TYPE=Unit`, `TYPE=Voucher`):
+>
+> ```bash
+> tally template --name collections/list_currencies --company "ABC"
+> tally template --name collections/list_units --company "ABC"
+> tally template --name collections/list_vouchers_dated --company "ABC" --from 2026-04-01 --to 2026-04-30
+> ```
 
 ### `tally report`
 Export a standard report.
@@ -305,5 +313,13 @@ The recommended way to invoke them is `tally template --name <relative/path>` (s
 | `collections/list_ledgers_by_group` | `{{COMPANY}}`, `{{GROUP}}` | Ledgers under a specific group |
 | `collections/list_stock_items_by_group` | `{{COMPANY}}`, `{{STOCKGROUP}}` | Stock items under a specific stock group |
 | `collections/list_vouchers_by_type` | `{{COMPANY}}`, `{{FROMDATE}}`, `{{TODATE}}`, `{{VOUCHERTYPE}}` | Day Book filtered by voucher type |
+
+**Custom-TDL collection templates** (workarounds for built-in report IDs that crash Tally):
+
+| Template | Placeholders | Why custom |
+|---|---|---|
+| `collections/list_currencies` | `{{COMPANY}}` | Built-in `List of Currencies` crashes Tally; uses `TYPE=Currency` |
+| `collections/list_units` | `{{COMPANY}}` | Built-in `List of Units` crashes Tally; uses `TYPE=Unit` |
+| `collections/list_vouchers_dated` | `{{COMPANY}}`, `{{FROMDATE}}`, `{{TODATE}}` | Built-in `List of Vouchers` crashes Tally; uses `TYPE=Voucher` |
 
 Templates can also be used as references when constructing custom `tally raw` requests.

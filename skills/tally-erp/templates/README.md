@@ -36,6 +36,20 @@ These templates use inline TDL (`ISMODIFY="Yes"`) to filter collections server-s
 | `collections/list_stock_items_by_group.xml` | `{{COMPANY}}`, `{{STOCKGROUP}}` | Stock items under a specific stock group |
 | `collections/list_vouchers_by_type.xml` | `{{COMPANY}}`, `{{FROMDATE}}`, `{{TODATE}}`, `{{VOUCHERTYPE}}` | Day Book filtered by voucher type |
 
+### Custom-TDL collection templates (Tally crash workarounds)
+
+The built-in collection IDs `List of Currencies`, `List of Units`, and `List of Vouchers` crash TallyPrime when exported as XML. These templates define the collection inline via `<TDLMESSAGE>` with the underlying object `<TYPE>` (`Currency`, `Unit`, `Voucher`) — bypassing the buggy report:
+
+| Template | Placeholders | Replaces |
+|---|---|---|
+| `collections/list_currencies.xml` | `{{COMPANY}}` | `List of Currencies` |
+| `collections/list_units.xml` | `{{COMPANY}}` | `List of Units` |
+| `collections/list_vouchers_dated.xml` | `{{COMPANY}}`, `{{FROMDATE}}`, `{{TODATE}}` | `List of Vouchers` |
+
+### Ping
+
+`utility/ping.xml` queries `List of Companies` with no `SVCURRENTCOMPANY` — useful as a connectivity check that works even when no company is loaded.
+
 ## Usage
 
 The recommended way to use templates is via `tally template`:

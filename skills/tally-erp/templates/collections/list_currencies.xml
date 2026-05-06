@@ -3,7 +3,7 @@
     <VERSION>1</VERSION>
     <TALLYREQUEST>Export</TALLYREQUEST>
     <TYPE>Collection</TYPE>
-    <ID>List of Currencies</ID>
+    <ID>CustomCurrencyList</ID>
   </HEADER>
   <BODY>
     <DESC>
@@ -11,6 +11,13 @@
         <SVCURRENTCOMPANY>{{COMPANY}}</SVCURRENTCOMPANY>
         <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
       </STATICVARIABLES>
+      <TDL>
+        <TDLMESSAGE>
+          <COLLECTION NAME="CustomCurrencyList" ISMODIFY="No">
+            <TYPE>Currency</TYPE>
+          </COLLECTION>
+        </TDLMESSAGE>
+      </TDL>
     </DESC>
   </BODY>
 </ENVELOPE>
