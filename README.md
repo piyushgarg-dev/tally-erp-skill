@@ -1,0 +1,128 @@
+# tally-erp
+
+A [Claude Code](https://claude.com/claude-code) skill that gives Claude read-only access to a running **TallyPrime** instance over its built-in XML/HTTP gateway.
+
+Ask Claude things like:
+
+> *"Show me the Day Book for last month."*
+> *"What's the closing balance on Customer ABC's ledger?"*
+> *"List all stock items under the Electronics group."*
+> *"Pull the trial balance for FY2025–26."*
+
+Claude calls a bundled Go CLI (`tally`) which constructs the right XML envelope, talks to TallyPrime over HTTP, and returns the response. You don't write XML, Claude doesn't hallucinate URLs.
+
+## Status
+
+Read-only. Queries Tally; never writes, alters, or cancels anything.
+
+## Prerequisites
+
+1. **TallyPrime** running on Windows.
+2. A company **loaded** in TallyPrime.
+3. **HTTP gateway enabled** — in TallyPrime: `F1 → Settings → Connectivity → Client/Server configuration → TallyPrime acts as Server`, default port `9000`.
+4. Reachable at `http://<host>:9000` from where Claude Code runs.
+
+## Install
+
+### As a Claude Code user skill
+
+Clone the repo and symlink (or copy) it into your Claude skills directory:
+
+```bash
+git clone https://github.com/piyushgarg/tally-skill ~/projects/tally-skill
+ln -s ~/projects/tally-skill ~/.claude/skills/tally-erp
+```
+
+Restart Claude Code. The skill becomes available; ask Claude something Tally-related and it will load automatically.
+
+### Manual CLI use
+
+The CLI binary works standalone too:
+
+```bash
+./bin/tally-windows-amd64.exe ping
+./bin/tally-windows-amd64.exe companies --pretty
+./bin/tally-windows-amd64.exe report --company "ABC" --id "Trial Balance" --from 2026-04-01 --to 2026-04-30 --pretty
+```
+
+## What you can query
+
+**Reports:** Day Book, Trial Balance, Profit & Loss, Balance Sheet, Ledger statement, Ledger/Group Outstandings, Bills Receivable/Payable, Sales/Purchase Register, Cash Flow, Funds Flow, Stock Summary, Godown Summary, Movement Analysis.
+
+**Collections (lists):** Companies, Groups, Ledgers, Stock Items, Stock Groups, Cost Centres, Godowns, Units, Voucher Types, Currencies, Budgets.
+
+**Single objects:** any Ledger, Group, Stock Item, Voucher, Cost Centre, Godown, Unit, Currency, or Voucher Type by name.
+
+**Custom XML:** anything Tally accepts via its XML gateway, via `tally raw` or the templates in `templates/`.
+
+## CLI reference (short)
+
+```
+tally ping                                    # connectivity check
+tally companies                               # list loaded companies
+tally object --subtype Ledger --id "Customer ABC" --fetch Name,ClosingBalance
+tally collection --id "List of Ledgers"
+tally report --id "Day Book" --from 2026-04-01 --to 2026-04-30
+tally template --name reports/day_book --from 2026-04-01 --to 2026-04-30
+tally raw --file my-request.xml
+```
+
+Global flags (any subcommand): `--host`, `--port`, `--company`, `--timeout`, `--pretty`.
+
+Full reference: see [SKILL.md](./SKILL.md).
+
+## Repository layout
+
+```
+tally-skill/
+├── SKILL.md                 # Skill instructions for Claude (loaded into context when triggered)
+├── README.md                # This file (human-facing)
+├── bin/
+│   └── tally-windows-amd64.exe   # Pre-built CLI binary
+├── cmd/tally/               # CLI entrypoint (Go)
+├── internal/
+│   ├── tally/               # XML envelope builders, HTTP client, status parsing
+│   └── cli/                 # Subcommand implementations
+├── templates/               # ~30 reusable XML request envelopes with {{PLACEHOLDERS}}
+├── docs/superpowers/        # Design spec + implementation plan
+├── go.mod
+└── Makefile                 # `make build` / `make build-all` / `make test`
+```
+
+## Build from source
+
+Requires Go 1.22+.
+
+```bash
+make test          # run all tests
+make build         # local dev build (bin/tally)
+make build-all     # cross-compile windows release (bin/tally-windows-amd64.exe)
+make checksums     # SHA-256 of release binaries
+```
+
+No external dependencies — standard library only.
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Success |
+| 1 | Tally returned `<STATUS>0</STATUS>` (envelope on stdout, reason on stderr) |
+| 2 | Tally unreachable |
+| 3 | Bad CLI args |
+| 4 | HTTP timeout |
+| 5 | Response not valid XML |
+
+## Why a Go CLI instead of letting Claude POST XML directly?
+
+- **Token efficiency** — Claude doesn't waste context constructing repetitive XML envelopes.
+- **Reliability** — escaping, status parsing, and date formatting are deterministic.
+- **Reusability** — the binary works without Claude too (scripts, cron, ad-hoc CLI use).
+
+## License
+
+MIT — see frontmatter in `SKILL.md`.
+
+## Author
+
+Piyush Garg
