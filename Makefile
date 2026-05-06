@@ -1,7 +1,7 @@
 VERSION ?= 0.1.0
 LDFLAGS := -ldflags "-s -w -X main.Version=$(VERSION)"
 PKG     := ./cmd/tally
-BIN     := skills/tally/bin
+BIN     := skills/tally-erp/bin
 
 .PHONY: build test clean build-all checksums
 

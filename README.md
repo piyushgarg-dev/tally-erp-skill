@@ -80,12 +80,12 @@ tally template --name reports/day_book --from 2026-04-01 --to 2026-04-30
 tally raw --file my-request.xml
 ```
 
-Global flags (any subcommand): `--host`, `--port`, `--company`, `--timeout`, `--pretty`.
+Global flags (any subcommand): `--scheme` (default `http`, use `https` for TLS), `--host`, `--port`, `--company`, `--timeout`, `--pretty`.
 
 Collection filtering flags: `--parent`, `--fields`, `--filter`.
 Report filtering flags: `--voucher-type`, `--filter`.
 
-Full reference: see [skills/tally/SKILL.md](./skills/tally/SKILL.md).
+Full reference: see [skills/tally-erp/SKILL.md](./skills/tally-erp/SKILL.md).
 
 ## Repository layout
 

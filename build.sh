@@ -4,7 +4,7 @@ set -euo pipefail
 VERSION="${VERSION:-0.1.0}"
 LDFLAGS="-s -w -X main.Version=${VERSION}"
 PKG="./cmd/tally"
-OUTDIR="skills/tally/bin"
+OUTDIR="skills/tally-erp/bin"
 
 mkdir -p "$OUTDIR"
 

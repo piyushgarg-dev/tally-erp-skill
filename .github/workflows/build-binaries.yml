@@ -45,7 +45,7 @@ jobs:
 
       - name: Commit updated binaries
         run: |
-          git add skills/tally/bin/
+          git add skills/tally-erp/bin/
           if git diff --cached --quiet; then
             echo "No binary changes to commit."
             exit 0
