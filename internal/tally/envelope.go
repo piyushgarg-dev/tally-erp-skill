@@ -114,6 +114,67 @@ func marshal(v interface{}) (string, error) {
 	return buf.String(), nil
 }
 
+// CollectionRequest describes an Export Collection query.
+type CollectionRequest struct {
+	ID      string
+	Company string
+	Fetch   []string
+}
+
+func BuildCollection(r CollectionRequest) (string, error) {
+	if r.ID == "" {
+		return "", fmt.Errorf("id is required")
+	}
+	env := envelope{
+		Header: header{
+			Version:      "1",
+			TallyRequest: "Export",
+			Type:         "Collection",
+			ID:           &idTag{Value: r.ID},
+		},
+	}
+	env.Body.Desc.Static = newStatics(r.Company, "", "", nil)
+	if len(r.Fetch) > 0 {
+		env.Body.Desc.FetchList = &fetchList{Fetches: r.Fetch}
+	}
+	return marshal(env)
+}
+
+// ReportRequest describes an Export Data report query.
+type ReportRequest struct {
+	ID       string
+	Company  string
+	FromDate string // YYYYMMDD
+	ToDate   string // YYYYMMDD
+	Vars     map[string]string
+}
+
+func BuildReport(r ReportRequest) (string, error) {
+	if r.ID == "" {
+		return "", fmt.Errorf("id is required")
+	}
+	env := envelope{
+		Header: header{
+			Version:      "1",
+			TallyRequest: "Export",
+			Type:         "Data",
+			ID:           &idTag{Value: r.ID},
+		},
+	}
+	env.Body.Desc.Static = newStatics(r.Company, r.FromDate, r.ToDate, r.Vars)
+	return marshal(env)
+}
+
+func (i idTag) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	start.Name.Local = "ID"
+	if i.Type != "" {
+		start.Attr = []xml.Attr{{Name: xml.Name{Local: "TYPE"}, Value: i.Type}}
+	} else {
+		start.Attr = nil
+	}
+	return e.EncodeElement(i.Value, start)
+}
+
 // MarshalStatic gives encoding/xml a stable shape for staticBlock.
 func (sb staticBlock) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	start.Name.Local = "STATICVARIABLES"
