@@ -1,10 +1,9 @@
-# Build outputs
+# Allow committed release binaries
 bin/tally
-bin/tally-*
-!bin/.gitkeep
 
 # Go
 *.exe
+!bin/*.exe
 *.test
 *.out
 coverage.txt
