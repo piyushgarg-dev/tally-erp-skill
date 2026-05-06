@@ -103,6 +103,31 @@ Common report IDs and required variables:
 
 For arbitrary additional `STATICVARIABLES`, use `--var KEY=VALUE` (repeatable). Use `--explode` to set `EXPLODEFLAG=Yes`.
 
+### `tally template`
+Load a bundled XML template, substitute `{{KEY}}` placeholders from CLI flags, and POST it to Tally. This is the recommended way to use the bundled `templates/` envelopes — much nicer than `sed` + `tally raw`.
+
+```bash
+tally template --name reports/day_book \
+    --company "ABC Co" \
+    --from 2026-04-01 --to 2026-04-30
+```
+
+Substitution flags (in addition to globals):
+
+| Flag | Placeholder |
+|---|---|
+| `--name` (required) | (selects template; relative path under `templates/`, `.xml` optional) |
+| `--templates-dir` | (override; default auto: `<exe>/../templates`, then `./templates`) |
+| `--company` (global) | `{{COMPANY}}` |
+| `--from` | `{{FROMDATE}}` (ISO `YYYY-MM-DD` -> Tally `YYYYMMDD`) |
+| `--to` | `{{TODATE}}` |
+| `--ledger` | `{{LEDGER}}` |
+| `--group` | `{{GROUP}}` |
+| `--stockitem` | `{{STOCKITEM}}` |
+| `--vouchertype` | `{{VOUCHERTYPE}}` |
+| `--vouchernumber` | `{{VOUCHERNUMBER}}` |
+| `--var KEY=VALUE` | `{{KEY}}` (repeatable, for any other placeholder) |
+
 ### `tally raw`
 Escape hatch — submits a complete `<ENVELOPE>` from stdin or `--file`. Use only when typed subcommands don't cover the case (custom TDL, exotic variables).
 
@@ -165,4 +190,6 @@ The CLI surfaces the message on stderr; the full envelope is still on stdout.
 
 ## Templates
 
-`templates/` ships ~30 reusable XML request envelopes with placeholders (`{{COMPANY}}`, `{{FROMDATE}}` in `YYYYMMDD`, `{{TODATE}}`, `{{LEDGER}}`, `{{GROUP}}`, `{{STOCKITEM}}`, `{{VOUCHERTYPE}}`, `{{VOUCHERNUMBER}}`). Use them as references when constructing custom `tally raw` requests.
+`templates/` ships ~30 reusable XML request envelopes with placeholders (`{{COMPANY}}`, `{{FROMDATE}}` in `YYYYMMDD`, `{{TODATE}}`, `{{LEDGER}}`, `{{GROUP}}`, `{{STOCKITEM}}`, `{{VOUCHERTYPE}}`, `{{VOUCHERNUMBER}}`).
+
+The recommended way to invoke them is `tally template --name <relative/path>` (see above), which handles placeholder substitution and date conversion for you. They can also be used as references when constructing custom `tally raw` requests.

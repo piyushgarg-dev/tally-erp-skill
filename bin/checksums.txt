@@ -1,1 +1,1 @@
-5f4e785015137e7249b8f1b56a9a1c857ecda69e5662ff947587cc2f355ce8b7  tally-windows-amd64.exe
+7ea37d66dfa986dabf7a3071f37823950a4ab658e066c0cd3be4b9555238caed  tally-windows-amd64.exe

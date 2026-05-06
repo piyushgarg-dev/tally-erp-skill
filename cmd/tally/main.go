@@ -41,6 +41,8 @@ func main() {
 		os.Exit(cli.RunReport(args))
 	case "raw":
 		os.Exit(cli.RunRaw(args))
+	case "template":
+		os.Exit(cli.RunTemplate(args))
 	case "help", "--help", "-h":
 		usage()
 	default:
@@ -63,6 +65,7 @@ Commands:
   collection          Export a collection (List of Ledgers, ...)
   report              Export a standard report (Day Book, Trial Balance, ...)
   raw                 POST a raw XML envelope (stdin or --file)
+  template            Substitute placeholders in a templates/*.xml file and POST it
   version             Print version
 
 Global flags (any subcommand):
