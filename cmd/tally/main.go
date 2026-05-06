@@ -34,6 +34,10 @@ func main() {
 		os.Exit(cli.RunRaw(args))
 	case "template":
 		os.Exit(cli.RunTemplate(args))
+	case "sync":
+		os.Exit(cli.RunSync(args))
+	case "query":
+		os.Exit(cli.RunQuery(args))
 	case "help", "--help", "-h":
 		usage()
 	default:
@@ -57,6 +61,8 @@ Commands:
   report              Export a standard report (Day Book, Trial Balance, ...)
   raw                 POST a raw XML envelope (stdin or --file)
   template            Substitute placeholders in a templates/*.xml file and POST it
+  sync                Fetch data from Tally and write to local file-tree cache
+  query               Query the local cache by party, stock item, or date
   version             Print version
 
 Global flags (any subcommand):

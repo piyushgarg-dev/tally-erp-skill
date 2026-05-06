@@ -199,6 +199,60 @@ tally raw --file my-request.xml
 
 The `templates/` directory contains ready-to-use envelope templates with `{{COMPANY}}`, `{{FROMDATE}}`, etc. placeholders that pair well with `tally raw`.
 
+### `tally sync`
+Fetch data from Tally and write it to a **local file-tree cache** for fast offline queries. Uses monthly chunking automatically to handle large companies.
+
+```bash
+tally sync --type sales --from 2025-04-01 --to 2026-03-31 \
+    --company "ABC" --host localhost --port 9000
+
+tally sync --type purchase --from 2025-04-01 --to 2026-03-31 \
+    --company "ABC" --scheme https --host tally.example.com --port 443
+```
+
+| Flag | Purpose |
+|---|---|
+| `--type` (required) | `sales` or `purchase` |
+| `--from`, `--to` (required) | Date range to sync (YYYY-MM-DD) |
+| `--cache-dir` | Override cache directory (default `.tally-cache/`) |
+| Global flags | `--company`, `--host`, `--port`, `--scheme`, `--timeout` |
+
+Creates a partitioned file tree at `.tally-cache/<company>/<type>/`:
+- `all.csv` — master file with all rows
+- `by-party/<name>.csv` — rows for each party
+- `by-stock/<name>.csv` — rows for each stock item
+- `by-month/YYYY-MM.csv` — rows for each month
+- `index.json` — metadata (row count, party list, stock list, sync time)
+
+### `tally query`
+Query the local file-tree cache **without hitting Tally**. Instant results from partitioned CSVs.
+
+```bash
+# All Zoloto items sold to a specific party
+tally query --type sales --party "Jai Chanda" --stock "Zoloto*" --company "ABC"
+
+# Summary of all sales to a party
+tally query --type sales --party "Jai Chanda*" --format summary --company "ABC"
+
+# Sales for a date range
+tally query --type sales --from 2025-04-01 --to 2025-06-30 --company "ABC"
+
+# JSON output
+tally query --type sales --stock "ZOLOTO*" --format json --company "ABC"
+```
+
+| Flag | Purpose |
+|---|---|
+| `--company` (required) | Selects which company cache to read |
+| `--type` | `sales` or `purchase` (default: `sales`) |
+| `--party` | Filter by party name (case-insensitive, supports `*` glob) |
+| `--stock` | Filter by stock item name (case-insensitive, supports `*` glob) |
+| `--from`, `--to` | Date range filter (YYYY-MM-DD) |
+| `--format` | Output format: `csv` (default), `json`, `summary` |
+| `--cache-dir` | Override cache directory (default `.tally-cache/`) |
+
+**Query strategy**: reads the smallest partition file possible (by-party, by-stock, or by-month) then applies remaining filters in-memory.
+
 ## Common Tally object fetch fields
 
 | Subtype | Useful fetch fields |
@@ -284,6 +338,17 @@ When `<STATUS>0</STATUS>`, Tally returns one of three formats:
 
 The CLI parses all three formats and surfaces the message on stderr; the full envelope is still on stdout.
 
+## Balance sign convention
+
+In Tally's XML output, balance amounts follow this sign convention:
+
+| Group | Negative value | Positive value |
+|---|---|---|
+| Sundry Debtors | **Debit balance** (party owes us — receivable) | Credit balance (we owe them) |
+| Sundry Creditors | **Credit balance** (we owe them — payable) | Debit balance (they owe us) |
+
+> ⚠️ A negative `ClosingBalance` or `BILLCL` for a Sundry Debtor means the party has an outstanding **debit balance** (they owe us money). Do NOT interpret it as an advance or credit.
+
 ## Large data guidance
 
 Tally companies can have thousands of ledgers, stock items, and vouchers. **Always scope your queries** to avoid overwhelming the response:
@@ -327,3 +392,94 @@ The recommended way to invoke them is `tally template --name <relative/path>` (s
 | `collections/list_vouchers_dated` | `{{COMPANY}}`, `{{FROMDATE}}`, `{{TODATE}}` | Built-in `List of Vouchers` crashes Tally; uses TDL `TYPE=Voucher` collection |
 
 Templates can also be used as references when constructing custom `tally raw` requests.
+
+## Local File-Tree Cache (sync + query)
+
+For large companies with thousands of vouchers, the CLI supports a **local file-tree cache** that enables instant queries without hitting Tally repeatedly.
+
+### How the cache is generated
+
+1. Run `tally sync` which internally uses the `list_vouchers_with_items` Collection-based template with **monthly chunking** (12 requests for a full FY).
+2. The XML responses are parsed into flat rows: `Date, Invoice, Party, StockItem, Rate, Discount%, Qty, Amount`.
+3. Rows are written to a partitioned file tree under `.tally-cache/<company>/<type>/`.
+
+### File tree structure
+
+```
+.tally-cache/
+  ABC_Company_Ltd/
+    sales/
+      all.csv              <- every row (50k+ lines for a full year)
+      by-party/
+        Customer_One_Delhi.csv
+        Customer_Two_Mumbai.csv
+        ...
+      by-stock/
+        Widget_A_20mm.csv
+        Pipe_B_50mm.csv
+        ...
+      by-month/
+        2025-04.csv
+        2025-05.csv
+        ...
+      index.json           <- metadata (parties, items, months, row count, sync time)
+```
+
+Each partition CSV has the same header: `Date,Invoice,Party,StockItem,Rate,Discount%,Qty,Amount`.
+
+File names are sanitized (spaces → underscores, special chars stripped, max 100 chars).
+
+### How Claude should use sync + query
+
+**Prefer `tally query` over live Tally requests** when:
+- The user asks for item-wise sales/purchase analysis over a full year
+- Multiple filters are needed (party + stock + date)
+- The data has already been synced (check if `.tally-cache/<company>/sales/index.json` exists)
+
+**Use `tally sync` first** if the cache doesn't exist or is stale:
+
+```bash
+tally sync --type sales --from 2025-04-01 --to 2026-03-31 \
+    --company "ABC Company Ltd" --host ... --port ...
+```
+
+**Then query instantly** (no network required):
+
+```bash
+# Sales of a specific stock group to a party
+tally query --type sales --party "Customer One*" --stock "Widget*" --format summary --company "ABC Company Ltd"
+
+# All sales of items matching a pattern
+tally query --type sales --stock "Pipe*" --format csv --company "ABC Company Ltd"
+
+# Date-filtered query
+tally query --type sales --from 2025-10-01 --to 2025-12-31 --party "Customer*" --company "ABC Company Ltd"
+```
+
+### Query strategy internals
+
+The `tally query` command picks the smallest partition file to minimize I/O:
+- `--party` set → reads from `by-party/<sanitized>.csv`
+- `--stock` set → reads from `by-stock/<sanitized>.csv`
+- Only `--from/--to` → reads matching `by-month/YYYY-MM.csv` files
+- No filters → reads `all.csv`
+
+Remaining filters (if both party and stock are set) are applied in-memory after loading the partition file.
+
+### index.json
+
+```json
+{
+  "company": "ABC Company Ltd",
+  "type": "sales",
+  "from": "2025-04-01",
+  "to": "2026-03-31",
+  "synced_at": "2026-05-07T00:15:00+05:30",
+  "total_rows": 50000,
+  "parties": ["Customer One, Delhi", "Customer Two, Mumbai", ...],
+  "stock_items": ["Widget A 20mm", "Pipe B 50mm", ...],
+  "months": ["2025-04", "2025-05", ...]
+}
+```
+
+Use `index.json` to check whether a sync is needed and to discover available parties/stock items for autocomplete or validation before querying.
