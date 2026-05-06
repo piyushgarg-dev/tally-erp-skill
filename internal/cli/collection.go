@@ -41,6 +41,10 @@ func runCollectionWithIO(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		return reportTransportError(stderr, err)
 	}
-	fmt.Fprintln(stdout, resp)
+	out := resp
+	if g.Pretty {
+		out = pretty(resp)
+	}
+	fmt.Fprintln(stdout, out)
 	return statusToExit(stderr, resp)
 }

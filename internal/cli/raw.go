@@ -78,8 +78,3 @@ func statusToExit(stderr io.Writer, resp string) int {
 	fmt.Fprintf(stderr, "tally: failure: %s\n", st.Message)
 	return ExitTallyFailure
 }
-
-func pretty(s string) string {
-	// Cheap pretty-print: rely on encoding/xml round-trip
-	return s // implementation deferred to Task 11
-}
