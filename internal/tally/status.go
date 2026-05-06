@@ -52,9 +52,50 @@ func extractMessage(data string) string {
 			return strings.TrimSpace(data[len("<LINEERROR>"):end])
 		}
 	}
+	if msg := extractStatusList(data); msg != "" {
+		return msg
+	}
 	if strings.HasPrefix(data, "<") {
-		// Some other structured failure; return as-is
 		return data
 	}
 	return data
+}
+
+type statusListEnvelope struct {
+	Statuses []struct {
+		Code string `xml:"CODE"`
+		Desc string `xml:"DESC"`
+	} `xml:"STATUS"`
+}
+
+func extractStatusList(data string) string {
+	if !strings.Contains(data, "<STATUS.LIST>") {
+		return ""
+	}
+	start := strings.Index(data, "<STATUS.LIST>")
+	end := strings.Index(data, "</STATUS.LIST>")
+	if start < 0 || end < 0 || end <= start {
+		return ""
+	}
+	fragment := data[start : end+len("</STATUS.LIST>")]
+	var sl statusListEnvelope
+	if err := xml.Unmarshal([]byte(fragment), &sl); err != nil {
+		return ""
+	}
+	if len(sl.Statuses) == 0 {
+		return ""
+	}
+	s := sl.Statuses[0]
+	code := strings.TrimSpace(s.Code)
+	desc := strings.TrimSpace(s.Desc)
+	if code != "" && desc != "" {
+		return "[" + code + "] " + desc
+	}
+	if desc != "" {
+		return desc
+	}
+	if code != "" {
+		return "error code " + code
+	}
+	return ""
 }

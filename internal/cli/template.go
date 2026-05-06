@@ -3,11 +3,13 @@ package cli
 import (
 	"bytes"
 	"context"
+	"encoding/xml"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/piyushgarg/tally-skill/internal/tally"
@@ -106,6 +108,7 @@ func runTemplateWithIO(args []string, stdout, stderr io.Writer) int {
 	}
 
 	final := substitute(body, subs)
+	warnUnfilledPlaceholders(final, stderr)
 
 	c := tally.NewClient(g.URL(), g.Timeout)
 	resp, err := c.Post(context.Background(), string(final))
@@ -165,7 +168,23 @@ func loadTemplate(dir, name string) ([]byte, error) {
 func substitute(in []byte, vars map[string]string) []byte {
 	out := in
 	for k, v := range vars {
-		out = bytes.ReplaceAll(out, []byte("{{"+k+"}}"), []byte(v))
+		var escaped bytes.Buffer
+		xml.EscapeText(&escaped, []byte(v))
+		out = bytes.ReplaceAll(out, []byte("{{"+k+"}}"), escaped.Bytes())
 	}
 	return out
+}
+
+var placeholderRe = regexp.MustCompile(`\{\{[A-Za-z_][A-Za-z0-9_]*\}\}`)
+
+func warnUnfilledPlaceholders(data []byte, stderr io.Writer) {
+	matches := placeholderRe.FindAll(data, -1)
+	seen := map[string]bool{}
+	for _, m := range matches {
+		s := string(m)
+		if !seen[s] {
+			seen[s] = true
+			fmt.Fprintf(stderr, "tally template: warning: unfilled placeholder %s\n", s)
+		}
+	}
 }

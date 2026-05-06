@@ -38,3 +38,25 @@ func TestParseStatusUnparseable(t *testing.T) {
 		t.Fatal("expected Parsed=false")
 	}
 }
+
+func TestParseStatusFailureWithStatusList(t *testing.T) {
+	x := `<ENVELOPE><HEADER><STATUS>0</STATUS></HEADER><BODY><DATA><STATUS.LIST><STATUS><CODE>123</CODE><DESC>Invalid Request</DESC></STATUS></STATUS.LIST></DATA></BODY></ENVELOPE>`
+	r := ParseStatus(x)
+	if r.Success() {
+		t.Fatal("expected failure")
+	}
+	if r.Message != "[123] Invalid Request" {
+		t.Errorf("got %q", r.Message)
+	}
+}
+
+func TestParseStatusFailureStatusListDescOnly(t *testing.T) {
+	x := `<ENVELOPE><HEADER><STATUS>0</STATUS></HEADER><BODY><DATA><STATUS.LIST><STATUS><DESC>Bad envelope</DESC></STATUS></STATUS.LIST></DATA></BODY></ENVELOPE>`
+	r := ParseStatus(x)
+	if r.Success() {
+		t.Fatal("expected failure")
+	}
+	if r.Message != "Bad envelope" {
+		t.Errorf("got %q", r.Message)
+	}
+}

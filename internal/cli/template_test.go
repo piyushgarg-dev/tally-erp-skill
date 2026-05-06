@@ -125,6 +125,53 @@ func TestTemplateRepeatableVar(t *testing.T) {
 	}
 }
 
+func TestTemplateXMLEscaping(t *testing.T) {
+	tmp := t.TempDir()
+	writeTemplate(t, tmp, "e.xml", `<N>{{COMPANY}}</N>`)
+
+	var got string
+	srv := newTallyOKServer(t, &got)
+	defer srv.Close()
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	code := runTemplateWithIO([]string{
+		"--host", hostOf(srv.URL), "--port", portOf(srv.URL),
+		"--templates-dir", tmp,
+		"--name", "e",
+		"--company", `M&S "Ltd"`,
+	}, stdout, stderr)
+	if code != 0 {
+		t.Fatalf("exit %d, stderr=%s", code, stderr.String())
+	}
+	if !strings.Contains(got, "M&amp;S &#34;Ltd&#34;") {
+		t.Errorf("expected XML-escaped value, server got %q", got)
+	}
+}
+
+func TestTemplateUnfilledPlaceholderWarning(t *testing.T) {
+	tmp := t.TempDir()
+	writeTemplate(t, tmp, "w.xml", `<X>{{COMPANY}}</X><Y>{{MISSING}}</Y>`)
+
+	srv := newTallyOKServer(t, nil)
+	defer srv.Close()
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	code := runTemplateWithIO([]string{
+		"--host", hostOf(srv.URL), "--port", portOf(srv.URL),
+		"--templates-dir", tmp,
+		"--name", "w",
+		"--company", "X",
+	}, stdout, stderr)
+	if code != 0 {
+		t.Fatalf("exit %d, stderr=%s", code, stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "{{MISSING}}") {
+		t.Errorf("expected warning about unfilled placeholder, stderr=%s", stderr.String())
+	}
+}
+
 func TestTemplateIsoDateConverted(t *testing.T) {
 	tmp := t.TempDir()
 	writeTemplate(t, tmp, "d.xml", `<D>{{FROMDATE}}|{{TODATE}}</D>`)

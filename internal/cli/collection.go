@@ -18,6 +18,9 @@ func runCollectionWithIO(args []string, stdout, stderr io.Writer) int {
 	g := registerGlobals(fs)
 	id := fs.String("id", "", "Collection name (e.g. \"List of Ledgers\")")
 	fetch := fs.String("fetch", "", "Comma-separated FETCH fields")
+	parent := fs.String("parent", "", "Filter to children of this group (TDL CHILD OF)")
+	fields := fs.String("fields", "", "Comma-separated NATIVEMETHOD fields to return")
+	filter := fs.String("filter", "", "TDL filter expression (e.g. \"$ClosingBalance > 10000\")")
 	if err := fs.Parse(args); err != nil {
 		return ExitUsage
 	}
@@ -26,10 +29,18 @@ func runCollectionWithIO(args []string, stdout, stderr io.Writer) int {
 		return ExitUsage
 	}
 
+	tdl := tally.BuildCollectionTDL(tally.CollectionFilter{
+		CollectionID: *id,
+		ChildOf:      *parent,
+		Fields:       splitCSV(*fields),
+		Filter:       *filter,
+	})
+
 	body, err := tally.BuildCollection(tally.CollectionRequest{
 		ID:      *id,
 		Company: g.Company,
 		Fetch:   splitCSV(*fetch),
+		TDL:     tdl,
 	})
 	if err != nil {
 		fmt.Fprintf(stderr, "tally collection: %v\n", err)

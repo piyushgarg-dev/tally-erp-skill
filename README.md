@@ -73,12 +73,17 @@ tally ping                                    # connectivity check
 tally companies                               # list loaded companies
 tally object --subtype Ledger --id "Customer ABC" --fetch Name,ClosingBalance
 tally collection --id "List of Ledgers"
+tally collection --id "List of Ledgers" --parent "Sundry Debtors" --fields Name,ClosingBalance
 tally report --id "Day Book" --from 2026-04-01 --to 2026-04-30
+tally report --id "Day Book" --from 2026-04-01 --to 2026-04-30 --voucher-type Sales
 tally template --name reports/day_book --from 2026-04-01 --to 2026-04-30
 tally raw --file my-request.xml
 ```
 
 Global flags (any subcommand): `--host`, `--port`, `--company`, `--timeout`, `--pretty`.
+
+Collection filtering flags: `--parent`, `--fields`, `--filter`.
+Report filtering flags: `--voucher-type`, `--filter`.
 
 Full reference: see [skills/tally/SKILL.md](./skills/tally/SKILL.md).
 
@@ -98,7 +103,7 @@ tally-skill/
 ├── internal/
 │   ├── tally/               # XML envelope builders, HTTP client, status parsing
 │   └── cli/                 # Subcommand implementations
-├── templates/               # ~30 reusable XML request envelopes with {{PLACEHOLDERS}}
+├── templates/               # ~33 reusable XML request envelopes with {{PLACEHOLDERS}}
 ├── README.md                # Human-facing
 ├── go.mod
 └── Makefile                 # `make build` / `make build-all` / `make test`
@@ -106,7 +111,7 @@ tally-skill/
 
 ## Build from source
 
-Requires Go 1.22+.
+Requires Go 1.26+.
 
 ```bash
 make test          # run all tests

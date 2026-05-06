@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/piyushgarg/tally-skill/internal/tally"
 )
@@ -52,19 +51,4 @@ func runObjectWithIO(args []string, stdout, stderr io.Writer) int {
 	}
 	fmt.Fprintln(stdout, out)
 	return statusToExit(stderr, resp)
-}
-
-func splitCSV(s string) []string {
-	if s == "" {
-		return nil
-	}
-	parts := strings.Split(s, ",")
-	out := parts[:0]
-	for _, p := range parts {
-		p = strings.TrimSpace(p)
-		if p != "" {
-			out = append(out, p)
-		}
-	}
-	return out
 }
