@@ -320,6 +320,6 @@ The recommended way to invoke them is `tally template --name <relative/path>` (s
 |---|---|---|
 | `collections/list_currencies` | `{{COMPANY}}` | Built-in `List of Currencies` crashes Tally; uses `TYPE=Currency` |
 | `collections/list_units` | `{{COMPANY}}` | Built-in `List of Units` crashes Tally; uses `TYPE=Unit` |
-| `collections/list_vouchers_dated` | `{{COMPANY}}`, `{{FROMDATE}}`, `{{TODATE}}` | Built-in `List of Vouchers` crashes Tally; uses `TYPE=Voucher` |
+| `collections/list_vouchers_dated` | `{{COMPANY}}`, `{{FROMDATE}}`, `{{TODATE}}` | Built-in `List of Vouchers` crashes Tally; uses Day Book report export instead |
 
 Templates can also be used as references when constructing custom `tally raw` requests.
