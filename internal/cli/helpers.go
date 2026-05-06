@@ -27,7 +27,10 @@ func statusToExit(stderr io.Writer, resp string) int {
 		fmt.Fprintln(stderr, "tally: response not valid XML")
 		return ExitBadResponse
 	}
-	if st.Code == 1 {
+	if st.Code == 1 || st.Code == -1 {
+		// Code 1: explicit <STATUS>1</STATUS>.
+		// Code -1: no STATUS header — Tally report exports return data
+		// directly without a status envelope; treat as success.
 		return ExitOK
 	}
 	fmt.Fprintf(stderr, "tally: failure: %s\n", st.Message)
