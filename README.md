@@ -1,5 +1,15 @@
 # tally-erp
 
+**Author:** Piyush Garg — Software Engineer | Tech Content Creator & YouTuber
+
+Connect with me:
+- Website: [piyushgarg.dev](https://www.piyushgarg.dev/)
+- GitHub: [piyushgarg-dev](https://github.com/piyushgarg-dev)
+- LinkedIn: [piyushgarg195](https://www.linkedin.com/in/piyushgarg195/)
+- X/Twitter: [@piyushgarg_dev](https://x.com/piyushgarg_dev)
+- Instagram: [@piyushgarg.official](https://www.instagram.com/piyushgarg.official/)
+- Email: [piyushgarg.dev@gmail.com](mailto:piyushgarg.dev@gmail.com)
+
 A [Claude Code](https://claude.com/claude-code) skill that gives Claude read-only access to a running **TallyPrime** instance over its built-in XML/HTTP gateway.
 
 Ask Claude things like:
@@ -143,6 +153,3 @@ No external dependencies — standard library only.
 
 MIT — see frontmatter in `SKILL.md`.
 
-## Author
-
-Piyush Garg
