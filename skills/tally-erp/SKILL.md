@@ -221,6 +221,34 @@ The `templates/` directory contains ready-to-use envelope templates with `{{COMP
 | 4 | HTTP timeout |
 | 5 | Response not valid XML |
 
+## Troubleshooting: Tally Unreachable (exit code 2)
+
+When `tally ping` fails with exit code 2 (connection refused / unreachable), ask the user:
+
+1. **Is TallyPrime currently running?** It must be open with a company loaded.
+2. **What port is TallyPrime's HTTP server running on?** The default is `9000`, but it may differ.
+
+Then provide these instructions so the user can verify and configure their TallyPrime HTTP server:
+
+> **How to check/enable the TallyPrime HTTP server:**
+>
+> 1. In TallyPrime, press **F1** (Help).
+> 2. Press **S** to open **Settings**.
+> 3. Press **N** to open **Connectivity**.
+> 4. Select **Client/Server Configuration**.
+> 5. Set **Tally Acts as** → **Server**.
+> 6. Set **Enable ODBC Server** → **Yes**.
+> 7. Note the **Port** number shown (default `9000`) — this is the port to use with `--port`.
+> 8. Accept/save the settings and restart TallyPrime if prompted.
+
+Once the user confirms the port, retry with the correct port:
+
+```bash
+tally ping --port <user-provided-port>
+```
+
+If the port differs from `9000`, use `--port` on all subsequent commands.
+
 ## Failure response shapes
 
 When `<STATUS>0</STATUS>`, Tally returns one of three formats:
