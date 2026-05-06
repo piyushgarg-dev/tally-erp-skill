@@ -2,8 +2,8 @@
   <HEADER>
     <VERSION>1</VERSION>
     <TALLYREQUEST>Export</TALLYREQUEST>
-    <TYPE>Collection</TYPE>
-    <ID>CustomVoucherList</ID>
+    <TYPE>Data</TYPE>
+    <ID>Day Book</ID>
   </HEADER>
   <BODY>
     <DESC>
@@ -13,14 +13,6 @@
         <SVTODATE>{{TODATE}}</SVTODATE>
         <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
       </STATICVARIABLES>
-      <TDL>
-        <TDLMESSAGE>
-          <COLLECTION NAME="CustomVoucherList" ISMODIFY="No">
-            <TYPE>Voucher</TYPE>
-            <FETCH>Date, VoucherTypeName, VoucherNumber, PartyLedgerName, Amount, Narration, Reference</FETCH>
-          </COLLECTION>
-        </TDLMESSAGE>
-      </TDL>
     </DESC>
   </BODY>
 </ENVELOPE>
