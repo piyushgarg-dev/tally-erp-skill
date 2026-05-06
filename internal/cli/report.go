@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/piyushgarg/tally-skill/internal/tally"
 )
@@ -39,6 +38,8 @@ func runReportWithIO(args []string, stdout, stderr io.Writer) int {
 	ledger := fs.String("ledger", "", "Ledger name for ledger reports")
 	group := fs.String("group", "", "Group name for group reports")
 	explode := fs.Bool("explode", false, "Set EXPLODEFLAG=Yes")
+	voucherType := fs.String("voucher-type", "", "Filter by voucher type (e.g. Sales, Purchase)")
+	filter := fs.String("filter", "", "TDL filter expression")
 	vars := &repeatableVar{}
 	fs.Var(vars, "var", "Repeatable; KEY=VALUE for arbitrary STATICVARIABLE")
 	if err := fs.Parse(args); err != nil {
@@ -74,12 +75,19 @@ func runReportWithIO(args []string, stdout, stderr io.Writer) int {
 		extra["EXPLODEFLAG"] = "Yes"
 	}
 
+	tdl := tally.BuildReportTDL(tally.ReportFilter{
+		ReportID:    *id,
+		VoucherType: *voucherType,
+		Filter:      *filter,
+	})
+
 	body, err := tally.BuildReport(tally.ReportRequest{
 		ID:       *id,
 		Company:  g.Company,
 		FromDate: fromTally,
 		ToDate:   toTally,
 		Vars:     extra,
+		TDL:      tdl,
 	})
 	if err != nil {
 		fmt.Fprintf(stderr, "tally report: %v\n", err)
@@ -91,21 +99,7 @@ func runReportWithIO(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		return reportTransportError(stderr, err)
 	}
-	out := resp
-	if g.Pretty {
-		out = pretty(resp)
-	}
+	out := renderOutput(resp, g.Format, g.Pretty)
 	fmt.Fprintln(stdout, out)
 	return statusToExit(stderr, resp)
-}
-
-func isoToTallyDate(s string) (string, error) {
-	if s == "" {
-		return "", nil
-	}
-	t, err := time.Parse("2006-01-02", s)
-	if err != nil {
-		return "", fmt.Errorf("expected YYYY-MM-DD, got %q", s)
-	}
-	return t.Format("20060102"), nil
 }

@@ -2,11 +2,9 @@ package cli
 
 import (
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
-	"net"
 	"os"
 
 	"github.com/piyushgarg/tally-skill/internal/tally"
@@ -47,34 +45,8 @@ func runRawWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int 
 		return reportTransportError(stderr, err)
 	}
 
-	out := resp
-	if g.Pretty {
-		out = pretty(resp)
-	}
+	out := renderOutput(resp, g.Format, g.Pretty)
 	fmt.Fprintln(stdout, out)
 
 	return statusToExit(stderr, resp)
-}
-
-func reportTransportError(stderr io.Writer, err error) int {
-	var nerr net.Error
-	if errors.As(err, &nerr) && nerr.Timeout() {
-		fmt.Fprintf(stderr, "tally: timeout: %v\n", err)
-		return ExitTimeout
-	}
-	fmt.Fprintf(stderr, "tally: cannot reach server: %v\n", err)
-	return ExitConnect
-}
-
-func statusToExit(stderr io.Writer, resp string) int {
-	st := tally.ParseStatus(resp)
-	if !st.Parsed {
-		fmt.Fprintln(stderr, "tally: response not valid XML")
-		return ExitBadResponse
-	}
-	if st.Code == 1 {
-		return ExitOK
-	}
-	fmt.Fprintf(stderr, "tally: failure: %s\n", st.Message)
-	return ExitTallyFailure
 }

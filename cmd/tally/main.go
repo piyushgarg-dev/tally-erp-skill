@@ -3,20 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/piyushgarg/tally-skill/internal/cli"
 )
 
 var Version = "dev"
-
-type globalFlags struct {
-	Host    string
-	Port    int
-	Company string
-	Timeout time.Duration
-	Pretty  bool
-}
 
 func main() {
 	if len(os.Args) < 2 {
