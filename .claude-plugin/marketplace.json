@@ -1,0 +1,22 @@
+{
+  "name": "piyushgarg-tally",
+  "description": "Marketplace hosting the tally-erp plugin for Claude Code.",
+  "owner": {
+    "name": "Piyush Garg",
+    "url": "https://github.com/piyushgarg"
+  },
+  "plugins": [
+    {
+      "name": "tally-erp",
+      "source": "./",
+      "description": "Read-only access to a running TallyPrime instance over its XML/HTTP gateway.",
+      "author": {
+        "name": "Piyush Garg"
+      },
+      "homepage": "https://github.com/piyushgarg/tally-skill",
+      "license": "MIT",
+      "category": "integration",
+      "tags": ["tally", "erp", "accounting", "xml", "tallyprime", "india"]
+    }
+  ]
+}

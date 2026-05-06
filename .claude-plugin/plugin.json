@@ -1,0 +1,12 @@
+{
+  "name": "tally-erp",
+  "description": "Read-only access to a running TallyPrime instance over its built-in XML/HTTP gateway. Lets Claude query ledgers, vouchers, stock items, day book, trial balance, P&L, balance sheet, and other standard reports without crafting raw XML.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Piyush Garg"
+  },
+  "homepage": "https://github.com/piyushgarg/tally-skill",
+  "repository": "https://github.com/piyushgarg/tally-skill",
+  "license": "MIT",
+  "keywords": ["tally", "tallyprime", "erp", "accounting", "xml", "india", "gst"]
+}

@@ -1,10 +1,5 @@
 ---
-name: tally-erp
 description: Read-only access to a running TallyPrime instance over its built-in XML/HTTP gateway. Lets Claude query ledgers, vouchers, stock items, day book, trial balance, P&L, balance sheet, and other standard reports without crafting raw XML.
-license: MIT
-metadata:
-  author: Piyush Garg
-  version: "1.0.0"
 ---
 
 # Tally ERP — Claude Skill
@@ -22,11 +17,14 @@ Talk to a running **TallyPrime** instance via its XML/HTTP gateway and pull acco
 
 **Always invoke the bundled `tally` CLI; never `curl`/HTTP/XML by hand** unless the user asks for raw XML or a feature isn't covered by typed subcommands (then use `tally raw`).
 
-TallyPrime only runs on Windows, so the bundled binary is `bin/tally-windows-amd64.exe`. Use that path directly:
+TallyPrime only runs on Windows. The plugin's `bin/` directory is automatically on `PATH` while the plugin is enabled, so invoke the binary by name:
 
 ```bash
-BIN="$SKILL_DIR/bin/tally-windows-amd64.exe"
+tally-windows-amd64.exe ping
+tally-windows-amd64.exe report --company "ABC" --id "Day Book" --from 2026-04-01 --to 2026-04-30
 ```
+
+(Throughout this document the binary is referred to as `tally` for brevity. On disk the file is `tally-windows-amd64.exe`.)
 
 ## Subcommands
 

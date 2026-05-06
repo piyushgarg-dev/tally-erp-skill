@@ -24,20 +24,31 @@ Read-only. Queries Tally; never writes, alters, or cancels anything.
 
 ## Install
 
-### As a Claude Code user skill
+### As a Claude Code plugin (recommended)
 
-Clone the repo and symlink (or copy) it into your Claude skills directory:
+Add this repo as a marketplace and install the plugin:
 
-```bash
-git clone https://github.com/piyushgarg/tally-skill ~/projects/tally-skill
-ln -s ~/projects/tally-skill ~/.claude/skills/tally-erp
+```text
+/plugin marketplace add piyushgarg/tally-skill
+/plugin install tally-erp@piyushgarg-tally
 ```
 
-Restart Claude Code. The skill becomes available; ask Claude something Tally-related and it will load automatically.
+The plugin's `bin/` directory is added to `PATH` automatically while the plugin is enabled, so the CLI is available as `tally-windows-amd64.exe` in any session.
 
-### Manual CLI use
+### Local development / testing
 
-The CLI binary works standalone too:
+Clone and load directly with `--plugin-dir`:
+
+```bash
+git clone https://github.com/piyushgarg/tally-skill
+claude --plugin-dir ./tally-skill
+```
+
+Run `/reload-plugins` to pick up edits without restarting.
+
+### Standalone CLI use
+
+The CLI binary works without Claude too:
 
 ```bash
 ./bin/tally-windows-amd64.exe ping
@@ -69,22 +80,26 @@ tally raw --file my-request.xml
 
 Global flags (any subcommand): `--host`, `--port`, `--company`, `--timeout`, `--pretty`.
 
-Full reference: see [SKILL.md](./SKILL.md).
+Full reference: see [skills/tally/SKILL.md](./skills/tally/SKILL.md).
 
 ## Repository layout
 
 ```
 tally-skill/
-├── SKILL.md                 # Skill instructions for Claude (loaded into context when triggered)
-├── README.md                # This file (human-facing)
-├── bin/
-│   └── tally-windows-amd64.exe   # Pre-built CLI binary
+├── .claude-plugin/
+│   ├── plugin.json          # Plugin manifest
+│   └── marketplace.json     # Self-hosted marketplace manifest
+├── skills/
+│   └── tally/
+│       └── SKILL.md         # Skill instructions for Claude
+├── bin/                     # Auto-added to PATH when plugin enabled
+│   └── tally-windows-amd64.exe
 ├── cmd/tally/               # CLI entrypoint (Go)
 ├── internal/
 │   ├── tally/               # XML envelope builders, HTTP client, status parsing
 │   └── cli/                 # Subcommand implementations
 ├── templates/               # ~30 reusable XML request envelopes with {{PLACEHOLDERS}}
-├── docs/superpowers/        # Design spec + implementation plan
+├── README.md                # Human-facing
 ├── go.mod
 └── Makefile                 # `make build` / `make build-all` / `make test`
 ```
