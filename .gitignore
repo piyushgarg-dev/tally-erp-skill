@@ -1,0 +1,15 @@
+# Build outputs
+bin/tally
+bin/tally-*
+!bin/.gitkeep
+
+# Go
+*.exe
+*.test
+*.out
+coverage.txt
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
