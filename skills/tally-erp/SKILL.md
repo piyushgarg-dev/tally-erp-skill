@@ -1,4 +1,5 @@
 ---
+name: tally-erp
 description: Read-only access to a running TallyPrime instance over its built-in XML/HTTP gateway. Lets Claude query ledgers, vouchers, stock items, day book, trial balance, P&L, balance sheet, and other standard reports without crafting raw XML.
 ---
 
