@@ -22,18 +22,11 @@ Talk to a running **TallyPrime** instance via its XML/HTTP gateway and pull acco
 
 **Always invoke the bundled `tally` CLI; never `curl`/HTTP/XML by hand** unless the user asks for raw XML or a feature isn't covered by typed subcommands (then use `tally raw`).
 
-Detect platform and pick the right binary:
+TallyPrime only runs on Windows, so the bundled binary is `bin/tally-windows-amd64.exe`. Use that path directly:
 
 ```bash
-case "$(uname -s)-$(uname -m)" in
-  Darwin-arm64) BIN="$SKILL_DIR/bin/tally-darwin-arm64" ;;
-  Darwin-x86_64) BIN="$SKILL_DIR/bin/tally-darwin-amd64" ;;
-  Linux-x86_64) BIN="$SKILL_DIR/bin/tally-linux-amd64" ;;
-  *) BIN="$SKILL_DIR/bin/tally-windows-amd64.exe" ;;
-esac
+BIN="$SKILL_DIR/bin/tally-windows-amd64.exe"
 ```
-
-(On a typical user machine running Tally, the Windows `.exe` is what you want.)
 
 ## Subcommands
 
