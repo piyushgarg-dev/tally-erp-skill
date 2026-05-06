@@ -99,10 +99,7 @@ func runReportWithIO(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		return reportTransportError(stderr, err)
 	}
-	out := resp
-	if g.Pretty {
-		out = pretty(resp)
-	}
+	out := renderOutput(resp, g.Format, g.Pretty)
 	fmt.Fprintln(stdout, out)
 	return statusToExit(stderr, resp)
 }

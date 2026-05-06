@@ -45,10 +45,7 @@ func runRawWithIO(args []string, stdin io.Reader, stdout, stderr io.Writer) int 
 		return reportTransportError(stderr, err)
 	}
 
-	out := resp
-	if g.Pretty {
-		out = pretty(resp)
-	}
+	out := renderOutput(resp, g.Format, g.Pretty)
 	fmt.Fprintln(stdout, out)
 
 	return statusToExit(stderr, resp)
