@@ -5,6 +5,7 @@ skills/tally-erp/bin/tally
 .claude/settings.local.json
 
 .playground
+.tally-cache
 
 # Go
 *.exe
