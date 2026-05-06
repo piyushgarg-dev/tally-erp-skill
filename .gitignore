@@ -4,6 +4,8 @@ skills/tally-erp/bin/tally
 # Local Claude Code settings
 .claude/settings.local.json
 
+.playground
+
 # Go
 *.exe
 !skills/tally-erp/bin/*.exe
