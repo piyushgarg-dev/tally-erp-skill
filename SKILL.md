@@ -1,80 +1,175 @@
 ---
 name: tally-erp
-description: Skill for cgiving Tally ERP software access to your Claude and other AI models for querying and retriving data from Tally Accounting Software and do processing.
+description: Read-only access to a running TallyPrime instance over its built-in XML/HTTP gateway. Lets Claude query ledgers, vouchers, stock items, day book, trial balance, P&L, balance sheet, and other standard reports without crafting raw XML.
 license: MIT
 metadata:
   author: Piyush Garg
   version: "1.0.0"
 ---
 
-# Tally Accounting Software
+# Tally ERP — Claude Skill
 
-Tally.ERP 9 is a comprehensive Enterprise Resource Planning software, developed by Tally Solutions, widely used for managing accounting, inventory, taxation (GST), payroll, and compliance in real-time. It simplifies day-to-day business operations, from invoicing to financial reporting, and is favored for its simplicity, speed, and versatility, especially among small-to-medium enterprises.
+Talk to a running **TallyPrime** instance via its XML/HTTP gateway and pull accounting data (ledgers, vouchers, stock, reports). Read-only.
 
-# Tally API & Integration
+## Prerequisites
 
-TallyPrime has supported integration with web scripting languages such as ASP/Perl/PHP and other languages like VB or any environment capable of supporting XML and HTTP. Integration with these products is possible as XML import and export capability is built into TallyPrime.
+1. TallyPrime is running on the user's machine.
+2. A company is loaded in TallyPrime.
+3. The HTTP gateway is enabled — in TallyPrime: `F1 → Settings → Connectivity → Client/Server configuration → TallyPrime acts as Server`, with port (default `9000`).
+4. Reachable at `http://<host>:9000` from where Claude runs.
 
-## XML Schema Overview and Base Document Structure
+## How Claude should use this skill
 
-TallyPrime uses a consistent XML structure for communication, built around an ENVELOPE element that contains a HEADER and BODY.
+**Always invoke the bundled `tally` CLI; never `curl`/HTTP/XML by hand** unless the user asks for raw XML or a feature isn't covered by typed subcommands (then use `tally raw`).
 
-Components of Request or Response
-<ENVELOPE> is the top element of the XML fragment which is representing the message. Both Request and Response consists of two sections:
+Detect platform and pick the right binary:
 
-Header
+```bash
+case "$(uname -s)-$(uname -m)" in
+  Darwin-arm64) BIN="$SKILL_DIR/bin/tally-darwin-arm64" ;;
+  Darwin-x86_64) BIN="$SKILL_DIR/bin/tally-darwin-amd64" ;;
+  Linux-x86_64) BIN="$SKILL_DIR/bin/tally-linux-amd64" ;;
+  *) BIN="$SKILL_DIR/bin/tally-windows-amd64.exe" ;;
+esac
+```
 
-Body
+(On a typical user machine running Tally, the Windows `.exe` is what you want.)
 
-Header Information
-Header section will give all identification information to the recipient such as authentication, transaction management, and payment so on. This section determines how the recipient of the message should process the information. Header information is classified in two ways, one is for Request and the other is for Response. All the information about Request or Response is enclosed with Header Tags.
+## Subcommands
 
-In case of Request, header information includes mainly four elements which are Version, TallyRequest, Type and ID. Version gives the version of the message format. Second element TallyRequest will identify the type of request as Import or Export in the messaging format. If the value of Tally Request is Import then the type of information would be Data, and the request will be identified by the report name specified in ID. If the value of Tally Request is Export then the type of information would be Data, Collection, Object or Function. The ID specifies the name of Report, Collection, Object or function.
+All subcommands accept these **global flags**: `--host` (default `localhost`), `--port` (default `9000`), `--company`, `--timeout` (default `30s`), `--pretty`.
 
-In the case of Response, there are mainly two elements which are Version and Status. Version gives the version of the message format. Status indicates whether the request is success or failure.
+### `tally ping`
+Confirm Tally is reachable and responding.
 
-Body Information
-It exchanges the information intended for the recipient of the message. This section gives the actual details of the message. It is further divided into two sections:
+```bash
+tally ping
+# stdout: tally: ok
+# exit 0 on success; 2 if unreachable; 4 on timeout
+```
 
-Description for Request/Response
+### `tally companies`
+List loaded companies.
 
-Data required for the Request/Response
+```bash
+tally companies --pretty
+```
 
-Description section is used to give the description for message, request or response. Description element mainly includes all types of variable information, storage information, computational information and user defined TDLs. All the description information is enclosed with <DESC> tags.
+### `tally object`
+Export a single object.
 
-Data section includes all the data information being transferred. All the data should be enclosed within the <DATA> tags.
+```bash
+tally object \
+  --company "ABC Company Ltd" \
+  --subtype Ledger \
+  --id "Customer ABC" \
+  --fetch Name,Parent,ClosingBalance,MailingName,Address
+```
 
-Basic Template:
+Subtypes: `Ledger`, `Group`, `StockItem`, `StockGroup`, `Voucher`, `CostCentre`, `Godown`, `Unit`, `Currency`, `VoucherType`, `Company`.
+
+### `tally collection`
+Export a list collection.
+
+```bash
+tally collection --company "ABC Company Ltd" --id "List of Ledgers"
+```
+
+Common collection IDs: `List of Companies`, `List of Groups`, `List of Ledgers`, `List of Cost Categories`, `List of Cost Centres`, `List of Stock Groups`, `List of Stock Categories`, `List of Stock Items`, `List of Godowns`, `List of Units`, `List of Voucher Types`, `List of Currencies`, `List of Budgets`.
+
+### `tally report`
+Export a standard report.
+
+```bash
+tally report --company "ABC" --id "Day Book" --from 2026-04-01 --to 2026-04-30
+tally report --company "ABC" --id "Ledger" --ledger "Customer ABC" --from 2026-04-01 --to 2026-04-30
+tally report --company "ABC" --id "Group Outstandings" --group "Sundry Debtors"
+```
+
+Common report IDs and required variables:
+
+| Report ID | Required |
+|---|---|
+| `Day Book` | `--from`, `--to` |
+| `Trial Balance` | `--from`, `--to` |
+| `Profit and Loss` | `--from`, `--to` |
+| `Balance Sheet` | `--from`, `--to` |
+| `Ledger` | `--ledger`, `--from`, `--to` |
+| `Ledger Outstandings` | `--ledger` |
+| `Group Outstandings` | `--group` |
+| `Bills Receivable` | `--from`, `--to` |
+| `Bills Payable` | `--from`, `--to` |
+| `Sales Register` | `--from`, `--to` |
+| `Purchase Register` | `--from`, `--to` |
+| `Cash Flow` | `--from`, `--to` |
+| `Funds Flow` | `--from`, `--to` |
+| `Stock Summary` | `--from`, `--to` |
+| `Godown Summary` | `--from`, `--to` |
+| `Movement Analysis` | `--from`, `--to` |
+| `List of Accounts` | none |
+
+For arbitrary additional `STATICVARIABLES`, use `--var KEY=VALUE` (repeatable). Use `--explode` to set `EXPLODEFLAG=Yes`.
+
+### `tally raw`
+Escape hatch — submits a complete `<ENVELOPE>` from stdin or `--file`. Use only when typed subcommands don't cover the case (custom TDL, exotic variables).
+
+```bash
+cat my-request.xml | tally raw
+tally raw --file my-request.xml
+```
+
+The `templates/` directory contains ready-to-use envelope templates with `{{COMPANY}}`, `{{FROMDATE}}`, etc. placeholders that pair well with `tally raw`.
+
+## Common Tally object fetch fields
+
+| Subtype | Useful fetch fields |
+|---|---|
+| Ledger | Name, Parent, OpeningBalance, ClosingBalance, MailingName, Address, StateName, PinCode, Country, Email, LedgerPhone, LedgerMobile, GSTRegistrationType, PartyGSTIN, IsBillWiseOn |
+| Group | Name, Parent, IsRevenue, IsDeemedPositive, AffectsGrossProfit |
+| StockItem | Name, Parent, BaseUnits, AdditionalUnits, OpeningBalance, ClosingBalance, OpeningRate, OpeningValue, GSTApplicable, GSTTypeOfSupply |
+| Voucher | Date, VoucherTypeName, VoucherNumber, Narration, PartyLedgerName, Amount, LedgerEntries.List, AllInventoryEntries.List |
+
+## Static variables
+
+| Variable | Format |
+|---|---|
+| `SVCURRENTCOMPANY` | string (set with `--company`) |
+| `SVFROMDATE` | YYYYMMDD (CLI accepts YYYY-MM-DD via `--from`) |
+| `SVTODATE` | YYYYMMDD (`--to`) |
+| `LedgerName` | string (`--ledger`) |
+| `GroupName` | string (`--group`) |
+| `EXPLODEFLAG` | `Yes`/`No` (`--explode`) |
+| `SVEXPORTFORMAT` | always set to `$$SysName:XML` by the CLI |
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Success — `<STATUS>1</STATUS>` |
+| 1 | Tally returned `<STATUS>0</STATUS>` (full envelope still on stdout; reason on stderr) |
+| 2 | Tally unreachable / connection refused |
+| 3 | Bad CLI args |
+| 4 | HTTP timeout |
+| 5 | Response not valid XML |
+
+## Failure response shapes
+
+When `<STATUS>0</STATUS>`, Tally returns either plain text:
 
 ```xml
-<ENVELOPE>
-
-<HEADER>
-
-<TALLYREQUEST>Import Data</TALLYREQUEST>
-
-</HEADER>
-
-<BODY>
-
-<IMPORTDATA>
-
-<REQUESTDESC>
-
-<REPORTNAME>Vouchers</REPORTNAME>
-
-</REQUESTDESC>
-
-<REQUESTDATA>
-
-<TALLYMESSAGE>
-
-<!– XML data for vouchers, ledgers, etc. –>
-
-</TALLYMESSAGE>
-
-</REQUESTDATA>
-</IMPORTDATA>
-</BODY>
-</ENVELOPE>
+<ENVELOPE><HEADER><STATUS>0</STATUS></HEADER><BODY><DATA>DESC not found</DATA></BODY></ENVELOPE>
 ```
+
+or a structured `<LINEERROR>`:
+
+```xml
+<ENVELOPE><HEADER><STATUS>0</STATUS></HEADER><BODY><DATA>
+  <LINEERROR>Voucher totals do not match!</LINEERROR>...
+</DATA></BODY></ENVELOPE>
+```
+
+The CLI surfaces the message on stderr; the full envelope is still on stdout.
+
+## Templates
+
+`templates/` ships ~30 reusable XML request envelopes with placeholders (`{{COMPANY}}`, `{{FROMDATE}}` in `YYYYMMDD`, `{{TODATE}}`, `{{LEDGER}}`, `{{GROUP}}`, `{{STOCKITEM}}`, `{{VOUCHERTYPE}}`, `{{VOUCHERNUMBER}}`). Use them as references when constructing custom `tally raw` requests.
