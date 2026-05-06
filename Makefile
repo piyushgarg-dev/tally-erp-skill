@@ -1,22 +1,23 @@
 VERSION ?= 0.1.0
 LDFLAGS := -ldflags "-s -w -X main.Version=$(VERSION)"
 PKG     := ./cmd/tally
+BIN     := skills/tally/bin
 
 .PHONY: build test clean build-all checksums
 
 build:
-	go build $(LDFLAGS) -o bin/tally $(PKG)
+	go build $(LDFLAGS) -o $(BIN)/tally $(PKG)
 
 test:
 	go test ./...
 
 build-windows:
-	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o bin/tally-windows-amd64.exe $(PKG)
+	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o $(BIN)/tally-windows-amd64.exe $(PKG)
 
 build-all: build-windows
 
 checksums:
-	cd bin && shasum -a 256 tally-* > checksums.txt
+	cd $(BIN) && shasum -a 256 tally-* > checksums.txt
 
 clean:
-	rm -f bin/tally bin/tally-* bin/checksums.txt
+	rm -f $(BIN)/tally $(BIN)/tally-* $(BIN)/checksums.txt

@@ -1,9 +1,12 @@
 # Allow committed release binaries
-bin/tally
+skills/tally/bin/tally
+
+# Local Claude Code settings
+.claude/settings.local.json
 
 # Go
 *.exe
-!bin/*.exe
+!skills/tally/bin/*.exe
 *.test
 *.out
 coverage.txt

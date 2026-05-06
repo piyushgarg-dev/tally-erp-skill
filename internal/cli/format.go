@@ -5,24 +5,27 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"strings"
+
+	"github.com/piyushgarg/tally-skill/internal/tally"
 )
 
 // renderOutput formats a Tally XML response according to the user's --format and --pretty flags.
-// Unknown formats fall back to raw XML.
+// Unknown formats fall back to raw XML. Illegal XML control bytes are stripped before parsing.
 func renderOutput(resp string, format string, pretty bool) string {
+	clean := tally.SanitizeXML(resp)
 	switch strings.ToLower(format) {
 	case "json":
-		if out, ok := xmlToJSON(resp, pretty); ok {
+		if out, ok := xmlToJSON(clean, pretty); ok {
 			return out
 		}
-		return resp
+		return clean
 	case "", "xml":
 		if pretty {
-			return prettyXML(resp)
+			return prettyXML(clean)
 		}
-		return resp
+		return clean
 	default:
-		return resp
+		return clean
 	}
 }
 

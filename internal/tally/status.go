@@ -28,7 +28,7 @@ type statusEnvelope struct {
 
 func ParseStatus(body string) Status {
 	var env statusEnvelope
-	if err := xml.Unmarshal([]byte(body), &env); err != nil {
+	if err := xml.Unmarshal([]byte(SanitizeXML(body)), &env); err != nil {
 		return Status{Parsed: false, Code: -1}
 	}
 	s := Status{Parsed: true, RawError: env.Body.Data.Inner}
