@@ -45,6 +45,7 @@ func runTemplateWithIO(args []string, stdout, stderr io.Writer) int {
 	stockitem := fs.String("stockitem", "", "{{STOCKITEM}}")
 	vouchertype := fs.String("vouchertype", "", "{{VOUCHERTYPE}}")
 	vouchernumber := fs.String("vouchernumber", "", "{{VOUCHERNUMBER}}")
+	chunk := fs.String("chunk", "", "Date chunking granularity: daily, weekly, or monthly")
 	vars := &templateVar{}
 	fs.Var(vars, "var", "Repeatable; KEY=VALUE for arbitrary {{KEY}} placeholder")
 	if err := fs.Parse(args); err != nil {
@@ -107,10 +108,50 @@ func runTemplateWithIO(args []string, stdout, stderr io.Writer) int {
 		subs["VOUCHERNUMBER"] = *vouchernumber
 	}
 
+	c := tally.NewClient(g.URL(), g.Timeout)
+
+	if *chunk != "" && fromTally != "" && toTally != "" {
+		chunks, err := tally.ChunkDates(fromTally, toTally, *chunk)
+		if err != nil {
+			fmt.Fprintf(stderr, "tally template: --chunk: %v\n", err)
+			return ExitUsage
+		}
+
+		var responses []string
+		allFailed := true
+		for i, ch := range chunks {
+			fmt.Fprintf(stderr, "tally: fetching chunk %d/%d (%s to %s)...\n", i+1, len(chunks), ch[0], ch[1])
+			chunkSubs := make(map[string]string, len(subs))
+			for k, v := range subs {
+				chunkSubs[k] = v
+			}
+			chunkSubs["FROMDATE"] = ch[0]
+			chunkSubs["TODATE"] = ch[1]
+
+			final := substitute(body, chunkSubs)
+			warnUnfilledPlaceholders(final, stderr)
+
+			resp, err := c.Post(context.Background(), string(final))
+			if err != nil {
+				fmt.Fprintf(stderr, "tally: chunk %d failed: %v\n", i+1, err)
+				continue
+			}
+			responses = append(responses, resp)
+			allFailed = false
+		}
+		if allFailed {
+			fmt.Fprintln(stderr, "tally: all chunks failed")
+			return ExitConnect
+		}
+		merged := tally.MergeResponses(responses)
+		out := renderOutput(merged, g.Format, g.Pretty)
+		fmt.Fprintln(stdout, out)
+		return ExitOK
+	}
+
 	final := substitute(body, subs)
 	warnUnfilledPlaceholders(final, stderr)
 
-	c := tally.NewClient(g.URL(), g.Timeout)
 	resp, err := c.Post(context.Background(), string(final))
 	if err != nil {
 		return reportTransportError(stderr, err)

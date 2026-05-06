@@ -137,6 +137,7 @@ tally report --company "ABC" --id "Day Book" --from 2026-04-01 --to 2026-04-30 -
 |---|---|
 | `--voucher-type` | Filter report by voucher type name (e.g. `Sales`, `Purchase`, `Payment`) |
 | `--filter` | Raw TDL filter expression |
+| `--chunk` | Date-based chunking: `daily`, `weekly`, or `monthly`. Splits the date range into sub-requests and merges results. Use for large companies where a single full-year request may timeout. |
 
 Common report IDs and required variables:
 
@@ -185,6 +186,7 @@ Substitution flags (in addition to globals):
 | `--stockitem` | `{{STOCKITEM}}` |
 | `--vouchertype` | `{{VOUCHERTYPE}}` |
 | `--vouchernumber` | `{{VOUCHERNUMBER}}` |
+| `--chunk` | Date chunking: `daily`, `weekly`, or `monthly` (splits date range, merges results) |
 | `--var KEY=VALUE` | `{{KEY}}` (repeatable, for any other placeholder) |
 
 ### `tally raw`
@@ -292,6 +294,7 @@ Tally companies can have thousands of ledgers, stock items, and vouchers. **Alwa
 4. **Use `--voucher-type`** when querying Day Book or similar reports to filter by transaction type.
 5. **Use `--filter`** for arbitrary TDL filter expressions when you need custom scoping.
 6. **Prefer `tally object`** (single item by name) over `tally collection` (all items) when you know the specific entity name.
+7. **Use `--chunk monthly`** on `tally report` or `tally template` when fetching a full financial year from a large company. This splits the request into monthly sub-requests and merges the results, avoiding timeouts.
 
 **TDL filter expression syntax** (for `--filter`):
 - Field access: `$FieldName` (e.g. `$ClosingBalance`, `$Name`, `$VoucherTypeName`)
@@ -312,7 +315,8 @@ The recommended way to invoke them is `tally template --name <relative/path>` (s
 |---|---|---|
 | `collections/list_ledgers_by_group` | `{{COMPANY}}`, `{{GROUP}}` | Ledgers under a specific group |
 | `collections/list_stock_items_by_group` | `{{COMPANY}}`, `{{STOCKGROUP}}` | Stock items under a specific stock group |
-| `collections/list_vouchers_by_type` | `{{COMPANY}}`, `{{FROMDATE}}`, `{{TODATE}}`, `{{VOUCHERTYPE}}` | Day Book filtered by voucher type |
+| `collections/list_vouchers_by_type` | `{{COMPANY}}`, `{{FROMDATE}}`, `{{TODATE}}`, `{{VOUCHERTYPE}}` | Vouchers filtered by type (Sales, Purchase, etc.) |
+| `collections/list_vouchers_with_items` | `{{COMPANY}}`, `{{FROMDATE}}`, `{{TODATE}}`, `{{VOUCHERTYPE}}` | Vouchers with inventory item details (STOCKITEMNAME, ACTUALQTY, RATE, AMOUNT) |
 
 **Custom-TDL collection templates** (workarounds for built-in report IDs that crash Tally):
 
@@ -320,6 +324,6 @@ The recommended way to invoke them is `tally template --name <relative/path>` (s
 |---|---|---|
 | `collections/list_currencies` | `{{COMPANY}}` | Built-in `List of Currencies` crashes Tally; uses `TYPE=Currency` |
 | `collections/list_units` | `{{COMPANY}}` | Built-in `List of Units` crashes Tally; uses `TYPE=Unit` |
-| `collections/list_vouchers_dated` | `{{COMPANY}}`, `{{FROMDATE}}`, `{{TODATE}}` | Built-in `List of Vouchers` crashes Tally; uses Day Book report export instead |
+| `collections/list_vouchers_dated` | `{{COMPANY}}`, `{{FROMDATE}}`, `{{TODATE}}` | Built-in `List of Vouchers` crashes Tally; uses TDL `TYPE=Voucher` collection |
 
 Templates can also be used as references when constructing custom `tally raw` requests.
