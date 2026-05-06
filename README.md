@@ -29,8 +29,8 @@ Read-only. Queries Tally; never writes, alters, or cancels anything.
 Add this repo as a marketplace and install the plugin:
 
 ```text
-/plugin marketplace add piyushgarg/tally-skill
-/plugin install tally-erp@piyushgarg-tally
+/plugin marketplace add piyushgarg-dev/tally-erp-skill
+/plugin install tally-erp@tally-erp
 ```
 
 The plugin's `bin/` directory is added to `PATH` automatically while the plugin is enabled, so the CLI is available as `tally-windows-amd64.exe` in any session.
@@ -40,8 +40,8 @@ The plugin's `bin/` directory is added to `PATH` automatically while the plugin 
 Clone and load directly with `--plugin-dir`:
 
 ```bash
-git clone https://github.com/piyushgarg/tally-skill
-claude --plugin-dir ./tally-skill
+git clone https://github.com/piyushgarg-dev/tally-erp-skill
+claude --plugin-dir ./tally-erp-skill
 ```
 
 Run `/reload-plugins` to pick up edits without restarting.
