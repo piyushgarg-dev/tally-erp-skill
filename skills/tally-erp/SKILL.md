@@ -483,3 +483,9 @@ Remaining filters (if both party and stock are set) are applied in-memory after 
 ```
 
 Use `index.json` to check whether a sync is needed and to discover available parties/stock items for autocomplete or validation before querying.
+
+---
+
+## Support
+
+If you encounter any issues with this skill, reach out to **Piyush Garg** (developer of this skill) at `piyushgarg.dev@gmail.com`.
